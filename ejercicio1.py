@@ -1,3 +1,5 @@
+from fractions import Fraction
+
 # Apartado a
 
 def exponenciacion(a,b):
@@ -26,11 +28,13 @@ def exponenciacion_iterativa(s,t):
     return acumulador
 
 
-print(exponenciacion(256,120)==exponenciacion_iterativa(256,120))
+#print(exponenciacion(256,120)==exponenciacion_iterativa(256,120))
 
 # apartado b
 
 # a^(-b) == (a^b)^(-1)
+def exp_inverse(a,b):
+    return Fraction(1,exponenciacion_iterativa(a,b))
 
 # apartado c
 
@@ -58,14 +62,41 @@ def bezout(a, b):
 # print(bezout(23, 48))
 
 def exp_mod_n(a,b,n):
-    
-    exp = exponenciacion(a,b)
-    mcd, inverse, t1 = bezout(exp%n, n)
-    
-    # Si el maximo comun divisor es 1, hay solución
-    if mcd == 1:
-        return inverse
-    else:
-        raise Exception("Inverse doesn't exists")
+    f_inverse=False
+    if b<0:
+        b=-b
+        f_inverse = True
 
-print(exp_mod_n(256,120, 8597)+8597)
+    exp = exponenciacion_iterativa(a%n,b)
+    if f_inverse:
+        mcd, inverse, t1 = bezout(exp%n, n)
+        
+        # Si el maximo comun divisor es 1, hay solución
+        if mcd == 1:
+            if inverse<0:
+                return inverse+n
+            return inverse
+        else:
+            raise Exception("Inverse doesn't exists")
+    
+    return exp%n
+
+
+def exp(a,b,n=None):
+    if n:
+        return exp_mod_n(a,b,n)
+    if b<0:
+        return exp_inverse(a,-b)
+    return exponenciacion_iterativa(a,b)
+        
+    
+
+
+
+#print(exp_mod_n(256,120, 8597)+8597)
+assert(exp_mod_n(256,120,8597)==3696)
+assert(exp_mod_n(256,-120,8597)==7748)
+assert(exp(256,120,8597)==3696)
+assert(exp(256,-120,8597)==7748)
+assert(exp(256,120)==256**120)
+assert(exp(256,-120)==Fraction(1,256**120))
