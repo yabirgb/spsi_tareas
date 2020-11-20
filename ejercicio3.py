@@ -3,13 +3,13 @@ Kasiski method
 """
 
 from typing import List, Dict
-from math import sqrt
+from math import sqrt, gcd
 from collections import defaultdict, Counter
 from ejercicio2 import Vigenere
 import string
 
 MIN_COUNT = 3
-MAX_COUNT = 10
+MAX_COUNT = 3
 
 def get_distance(substring, offset, substring_map, distances):
 
@@ -33,8 +33,17 @@ def find_repeated_substrings(text:str, substring_map:Dict[str, int], distances:s
         offset += 1
         count = MIN_COUNT
 
-def count_distance_divisors(distance:int, divisors:Dict[int, int]):
+def gcd_distance(distances):
+    dst=list(distances)
+    print(dst)
+    g=dst[0]
+    for i in dst[1:]:
+        if i!=1:
+            g=gcd(g,i)
+    return g
 
+def count_distance_divisors(distance:int):
+    divisors={}
     div = 2
     while div < int(sqrt(distance)):
 
@@ -44,12 +53,13 @@ def count_distance_divisors(distance:int, divisors:Dict[int, int]):
             distance = distance // div 
         else:
             div += 1 
+    return divisors
 
-def find_distances_divisors(divisors:Dict[int, int], distances:set):
+'''def find_distances_divisors(divisors:Dict[int, int], distances:set):
 
     for dist in distances:
         count_distance_divisors(dist, divisors)
-
+'''
 def extract_frequencies(s:str, alph:str):
     n_app=Counter(s)
     freq=[]
@@ -97,7 +107,14 @@ def cracker(msg, k, alph, p):
     return "".join([alph[i] for i in keys]) 
     #return keys
 
-
+def kasiski(intxt):
+    substrings = dict()
+    divisors = defaultdict(int)
+    distances = set()
+    find_repeated_substrings(intxt, substrings, distances)
+    distance=gcd_distance(distances)
+    print(distance)
+    print(count_distance_divisors(distance))
 
 p=[0.1253, 0.014199999999999999, 0.046799999999999994, 0.058600000000000006, 0.1368, 0.0069, 0.0101, 0.006999999999999999, 0.0625, 0.0044, 0.0002, 0.049699999999999994, 0.0315, 0.06709999999999999, 0.0868, 0.025099999999999997, 0.0088, 0.0687, 0.07980000000000001, 0.0463, 0.0393, 0.009000000000000001, 0.0001, 0.0022, 0.009000000000000001, 0.0052]
 
@@ -116,3 +133,4 @@ V = Vigenere(string.ascii_uppercase, cracker(intxt,7,string.ascii_uppercase,p))
 #ciph=V.cipher("era una noche de verano cuando el asesino y la victima se cruzaron en lo que se conocia como el jardin de los tristes. era un momento en el que ambos supieron quie se acercaba una desgracia pero ninguno podía hacer nada para evitar el desastre, tres segundos más tarde solo quedaba un alma en la tierra y una nueva andaba por los jardines del paraiso.")
 print(V.decipher(intxt))
 
+kasiski(intxt)
