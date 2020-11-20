@@ -9,7 +9,7 @@ from ejercicio2 import Vigenere
 import string
 
 MIN_COUNT = 3
-MAX_COUNT = 3
+MAX_COUNT = 10
 
 def get_distance(substring, offset, substring_map, distances):
 
@@ -35,15 +35,16 @@ def find_repeated_substrings(text:str, substring_map:Dict[str, int], distances:s
 
 def gcd_distance(distances):
     dst=list(distances)
-    print(dst)
     g=dst[0]
     for i in dst[1:]:
-        if i!=1:
-            g=gcd(g,i)
+        prev = g
+        g=gcd(g,i)
+        if g == 1:
+            g=prev
     return g
 
 def count_distance_divisors(distance:int):
-    divisors={}
+    divisors=set([distance])
     div = 2
     while div < int(sqrt(distance)):
 
@@ -52,7 +53,8 @@ def count_distance_divisors(distance:int):
             divisors[distance//div] += 1
             distance = distance // div 
         else:
-            div += 1 
+            div += 1
+ 
     return divisors
 
 '''def find_distances_divisors(divisors:Dict[int, int], distances:set):
@@ -113,9 +115,10 @@ def kasiski(intxt):
     distances = set()
     find_repeated_substrings(intxt, substrings, distances)
     distance=gcd_distance(distances)
-    print(distance)
-    print(count_distance_divisors(distance))
-
+    #print(distance)
+    #print(count_distance_divisors(distance))
+    return count_distance_divisors(distance)
+    
 p=[0.1253, 0.014199999999999999, 0.046799999999999994, 0.058600000000000006, 0.1368, 0.0069, 0.0101, 0.006999999999999999, 0.0625, 0.0044, 0.0002, 0.049699999999999994, 0.0315, 0.06709999999999999, 0.0868, 0.025099999999999997, 0.0088, 0.0687, 0.07980000000000001, 0.0463, 0.0393, 0.009000000000000001, 0.0001, 0.0022, 0.009000000000000001, 0.0052]
 
 intxt = """UECWKDVLOTTVACKTPVGEZQMDAMRNPDDUXLBUICAMRHOECBHSPQLVIWOFFEAILPNTESMLDRUURIFAEQTTPXADWIAWLACCRPBHSRZIVQWOFROGTTNNXEVIVIBPDTTGAHVIACLAYKGJIEQHGECMESNNOCTHSGGNVWTQHKBPRHMVUOYWLIAFIRIGDBOEBQLIGWARQHNLOISQKEPEIDVXXNETPAXNZGDXWWEYQCTIGONNGJVHSQGEATHSYGSDVVOAQCXLHSPQMDMETRTMDUXTEQQJMFAEEAAIMEZREGIMUECICBXRVQRSMENNWTXTNSRNBPZHMRVRDYNECGSPMEAVTENXKEQKCTTHSPCMQQHSQGTXMFPBGLWQZRBOEIZHQHGRTOBSGTATTZRNFOSMLEDWESIWDRNAPBFOFHEGIXLFVOGUZLNUSRCRAZGZRTTAYFEHKHMCQNTZLENPUCKBAYCICUBNRPCXIWEYCSIMFPRUTPLXSYCBGCCUYCQJMWIEKGTUBRHVATTLEKVACBXQHGPDZEANNTJZTDRNSDTFEVPDXKTMVNAIQMUQNOHKKOAQMTBKOFSUTUXPRTMXBXNPCLRCEAEOIAWGGVVUSGIOEWLIQFOZKSPVMEBLOHLXDVCYSMGOPJEFCXMRUIGDXNCCRPMLCEWTPZMOQQSAWLPHPTDAWEYJOGQSOAVERCTNQQEAVTUGKLJAXMRTGTIEAFWPTZYIPKESMEAFCGJILSBPLDABNFVRJUXNGQSWIUIGWAAMLDRNNPDXGNPTTGLUHUOBMXSPQNDKBDBTEECLECGRDPTYBVRDATQHKQJMKEFROCLXNFKNSCWANNAHXTRGKCJTTRRUEMQZEAEIPAWEYPAJBBLHUEHMVUNFRPVMEDWEKMHRREOGZBDBROGCGANIUYIBNZQVXTGORUUCUTNBOEIZHEFWNBIGOZGTGWXNRHERBHPHGSIWXNPQMJVBCNEIDVVOAGLPONAPWYPXKEFKOCMQTRTIDZBNQKCPLTTNOBXMGLNRRDNNNQKDPLTLNSUTAXMNPTXMGEZKAEIKAGQ"""
@@ -128,9 +131,18 @@ find_distances_divisors(divisors, distances)
 
 c = Counter(divisors)
 print(c.most_common(5))"""
-print( cracker(intxt,7,string.ascii_uppercase,p))
-V = Vigenere(string.ascii_uppercase, cracker(intxt,7,string.ascii_uppercase,p))
-#ciph=V.cipher("era una noche de verano cuando el asesino y la victima se cruzaron en lo que se conocia como el jardin de los tristes. era un momento en el que ambos supieron quie se acercaba una desgracia pero ninguno podía hacer nada para evitar el desastre, tres segundos más tarde solo quedaba un alma en la tierra y una nueva andaba por los jardines del paraiso.")
-print(V.decipher(intxt))
 
-kasiski(intxt)
+def break_code(intxt, alph, p):
+    keys = []
+    for length in kasiski(intxt):
+        keys.append(cracker(intxt,length,alph,p))
+
+    return keys
+
+
+for key in break_code(intxt, string.ascii_uppercase, p):
+
+    V = Vigenere(string.ascii_uppercase, cracker(intxt,7,string.ascii_uppercase,p))
+    print(f"Llave con longitud {len(key)}: {key}")
+    print("Texto: ")
+    print(V.decipher(intxt))
