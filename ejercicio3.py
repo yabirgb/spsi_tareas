@@ -50,7 +50,7 @@ def find_distances_divisors(divisors:Dict[int, int], distances:set):
     for dist in distances:
         count_distance_divisors(dist, divisors)
 
-def extract_frequencies(s:str, alph:str)->List[float]:
+def extract_frequencies(s:str, alph:str):
     n_app=Counter(s)
     freq=[]
     for char in alph:
@@ -61,20 +61,20 @@ def extract_frequencies(s:str, alph:str)->List[float]:
             freq.append(0)
     return freq   
 
-def MIC(p:List[float], s:str, alph:str):
-    s_freq=extract_frequencies(s,alph)
+def MIC(p, s:str, alph:str):
+    s_freq = extract_frequencies(s, alph)
     return sum(map(lambda x:x[0]*x[1],zip(p,s_freq)))/len(s)
 
 def shift_by_n(s:str, n:int, alph:str):
-    return "".join([alph[(alph.index(s[i])+n)%len(alph)] for i in range(len(s))])
+    return "".join([alph[(alph.index(char)+n)%len(alph)] for char in s])
 
 def compute_most_probable(s:str,p, alph:str):
     mic=[]
     for i in range(len(alph)):
         mic.append(MIC(p, shift_by_n(s,i,alph), alph))
-    
+    #print(mic)
     candidate=max(enumerate(mic), key=lambda x: x[1])[0]
-    return (candidate+len(alph))%len(alph)
+    return (len(alph)-candidate)%len(alph)
 
 
 def cracker(msg, k, alph, p):
@@ -111,6 +111,7 @@ find_distances_divisors(divisors, distances)
 
 c = Counter(divisors)
 print(c.most_common(5))"""
+print( cracker(intxt,7,string.ascii_uppercase,p))
 V = Vigenere(string.ascii_uppercase, cracker(intxt,7,string.ascii_uppercase,p))
 #ciph=V.cipher("era una noche de verano cuando el asesino y la victima se cruzaron en lo que se conocia como el jardin de los tristes. era un momento en el que ambos supieron quie se acercaba una desgracia pero ninguno podía hacer nada para evitar el desastre, tres segundos más tarde solo quedaba un alma en la tierra y una nueva andaba por los jardines del paraiso.")
 print(V.decipher(intxt))

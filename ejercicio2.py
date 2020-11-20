@@ -44,6 +44,6 @@ class Vigenere:
         #print(len(key),len(msg_encoded))
         return "".join(map(lambda x: self._diff_chars(x[0],x[1]), zip(msg_encoded, key)))
 
-V = Vigenere(ascii_lowercase, "lauraguapa")
-ciph=V.cipher("era una noche de verano cuando el asesino y la victima se cruzaron en lo que se conocia como el jardin de los tristes. era un momento en el que ambos supieron quie se acercaba una desgracia pero ninguno podía hacer nada para evitar el desastre, tres segundos más tarde solo quedaba un alma en la tierra y una nueva andaba por los jardines del paraiso.")
-print(V.decipher(ciph))
+#V = Vigenere(ascii_lowercase, "lauraguapa")
+#ciph=V.cipher("era una noche de verano cuando el asesino y la victima se cruzaron en lo que se conocia como el jardin de los tristes. era un momento en el que ambos supieron quie se acercaba una desgracia pero ninguno podía hacer nada para evitar el desastre, tres segundos más tarde solo quedaba un alma en la tierra y una nueva andaba por los jardines del paraiso.")
+#print(V.decipher(ciph))
