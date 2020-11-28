@@ -3,7 +3,7 @@ Kasiski method
 """
 
 from typing import List, Dict
-from math import sqrt, gcd
+from math import sqrt, gcd, inf
 from collections import defaultdict, Counter
 from ejercicio2 import Vigenere
 import string
@@ -23,9 +23,10 @@ class Cracker:
     attack(text): Intenta obtener el texto cifrado correspondiente a text
     """
 
-    def __init__(self, alph, p, minc=3, maxc=6):
+    def __init__(self, alph, p, kp, minc=3, maxc=6):
         self.alph = alph 
         self.p = p
+        self.kp = kp
 
         self.MIN_COUNT = minc
         self.MAX_COUNT = maxc
@@ -117,6 +118,18 @@ class Cracker:
                 freq.append(0)
         return freq   
 
+    def _extract_occurencies(self, s):
+        n_app=Counter(s)
+        occ = []
+        for char in self.alph:
+            n = n_app.get(char)
+            if n:
+                occ.append(n)
+            else:
+                occ.append(0)
+
+        return occ
+
     def MIC(self, s:str):
         # Funcion MIC tal y como se define en el articulo
         s_freq = self._extract_frequencies(s)
@@ -152,7 +165,7 @@ class Cracker:
         distance=self._gcd_distance(distances)
         return self._count_distance_divisors(distance)
 
-    def cracker(self, msg, k):
+    def _split_n_chars(self, msg, k):
         # En s_i almacenamos las cadenas de caracteres que aparecen cada i
         # posiciones en el texto de partida
         s_i=[[]for i in range(k)]
@@ -167,6 +180,13 @@ class Cracker:
         for i,lst in enumerate(s_i):
             s_i[i]="".join(lst)
 
+        return s_i 
+
+    def cracker(self, msg, k):
+        # En s_i almacenamos las cadenas de caracteres que aparecen cada i
+        # posiciones en el texto de partida
+        s_i=self._split_n_chars(msg, k)
+
         # Ahora obtenemos las claves que se consideran posibles
         keys=[]
         for lst in s_i:
@@ -176,27 +196,94 @@ class Cracker:
         # dichas posiciones a una clave de caracteres del alfabeto
         return "".join([self.alph[i] for i in keys]) 
 
-    def _break_code(self, intxt):
+    def _break_code(self, intxt, method="kasiski"):
         """
-        Aplicando el teste de kasiski obtenemos una lista de posibles longitudes
-        de claves y obtenemos las claves asociadas a dichas longitudes.
-
-        Finalmente devolvemos el conjunto de claves que se creen posibles.
+        En funcion del metodo que se elija obtenemos una lista de longitudes
+        candidatas y a continuacion usamos  el test del articulo para buscar la clave
         """
         
         keys = []
 
-        for length in self.kasiski(intxt):
+        # Elegimos le metodo correcto
+        alg = self.kasiski
+        if method == "friedman":
+            alg = self.friedman_analysis
+
+        # Obtenemos las posibles longitudes para la clave
+        possibilities = alg(intxt)
+
+        # friedman solo devuelve una longitud asi que para que el codigo valga
+        # para ambos codigos lo englobamos en una lista
+        if type(possibilities) == int:
+            possibilities = [possibilities]
+
+        for length in possibilities:
             keys.append(self.cracker(intxt, length))
 
         return keys
 
-    def attack(self, intxt):
+
+    def _friedman_formula(self, k0):
+        kr = 1/len(self.alph)
+
+        return (self.kp-kr)/(k0-kr)
+
+    def _friedman_k0(self, text):
+        """
+        Calcular el valor de k0 utilizado en el test de friedman
+        """
+        freq = self._extract_occurencies(text)
+        return sum([f*(f-1) for f in freq])/(len(text)*(len(text)-1))
+
+    def friedman_analysis(self, text, r=1):
+        """
+        Metodo para obtener una aproximancion de la longitud de la clave
+        usando el test de friedman
+        """
+
+        # calculamos ic para el texto original
+        k0 = self._friedman_k0(text)
+        estimation = self._friedman_formula(k0)
+
+        # Buscamos el valor que mas se aproxime a 1
+        nearest_to_one_value, nearest_to_one_length = inf, None
+
+        # En un radio de la primera aproxumacion encontrada
+        for l in range(int(estimation)-r, int(estimation)+r+1):
+            s_i = self._split_n_chars(text, l)
+            ic = [self._friedman_formula(self._friedman_k0(s)) for s in s_i]
+
+            # calculamos la media de las columnas
+            average = sum(ic)/len(ic)
+
+            # Calculamos el valor obtenido de la formula de friedman con la
+            # media 
+            value = self._friedman_formula(average)
+            # Si el valor es mas proximo a 1 lo tomamos
+            if abs(1-value)<nearest_to_one_value:
+                nearest_to_one_value = value
+                nearest_to_one_length = l
+
+        
+        return nearest_to_one_length
+
+    def attack_kasiski(self, intxt):
         # ataque al cifrado de vigenere
 
         # Para cada clave candidata obtenida usamos la clase vigenre
         # para descifrar usando dicha clave e imprimos el texto obtenido
         for key in self._break_code(intxt):
+            V = Vigenere(self.alph, self.cracker(intxt,len(key)))
+            print(f"Llave con longitud {len(key)}: {key}")
+            print("Texto: ")
+            print(V.decipher(intxt))
+
+    def attack_friedman(self, intxt, radius = 3):
+        # ataque al cifrado de vigenere
+
+        # Para cada clave candidata obtenida usamos la clase vigenre
+        # para descifrar usando dicha clave e imprimos el texto obtenido
+        for key in self._break_code(intxt, method = "friedman"):
             V = Vigenere(self.alph, self.cracker(intxt,len(key)))
             print(f"Llave con longitud {len(key)}: {key}")
             print("Texto: ")
@@ -209,8 +296,16 @@ p = [0.1253, 0.014199999999999999, 0.046799999999999994, 0.058600000000000006,
         0.0088, 0.0687, 0.07980000000000001, 0.0463, 0.0393, 0.009000000000000001, 0.0001, 
         0.0022, 0.009000000000000001, 0.0052]
 
+kp_en = 0.0685
+kp_es = 0.0755
+
 intxt = """UECWKDVLOTTVACKTPVGEZQMDAMRNPDDUXLBUICAMRHOECBHSPQLVIWOFFEAILPNTESMLDRUURIFAEQTTPXADWIAWLACCRPBHSRZIVQWOFROGTTNNXEVIVIBPDTTGAHVIACLAYKGJIEQHGECMESNNOCTHSGGNVWTQHKBPRHMVUOYWLIAFIRIGDBOEBQLIGWARQHNLOISQKEPEIDVXXNETPAXNZGDXWWEYQCTIGONNGJVHSQGEATHSYGSDVVOAQCXLHSPQMDMETRTMDUXTEQQJMFAEEAAIMEZREGIMUECICBXRVQRSMENNWTXTNSRNBPZHMRVRDYNECGSPMEAVTENXKEQKCTTHSPCMQQHSQGTXMFPBGLWQZRBOEIZHQHGRTOBSGTATTZRNFOSMLEDWESIWDRNAPBFOFHEGIXLFVOGUZLNUSRCRAZGZRTTAYFEHKHMCQNTZLENPUCKBAYCICUBNRPCXIWEYCSIMFPRUTPLXSYCBGCCUYCQJMWIEKGTUBRHVATTLEKVACBXQHGPDZEANNTJZTDRNSDTFEVPDXKTMVNAIQMUQNOHKKOAQMTBKOFSUTUXPRTMXBXNPCLRCEAEOIAWGGVVUSGIOEWLIQFOZKSPVMEBLOHLXDVCYSMGOPJEFCXMRUIGDXNCCRPMLCEWTPZMOQQSAWLPHPTDAWEYJOGQSOAVERCTNQQEAVTUGKLJAXMRTGTIEAFWPTZYIPKESMEAFCGJILSBPLDABNFVRJUXNGQSWIUIGWAAMLDRNNPDXGNPTTGLUHUOBMXSPQNDKBDBTEECLECGRDPTYBVRDATQHKQJMKEFROCLXNFKNSCWANNAHXTRGKCJTTRRUEMQZEAEIPAWEYPAJBBLHUEHMVUNFRPVMEDWEKMHRREOGZBDBROGCGANIUYIBNZQVXTGORUUCUTNBOEIZHEFWNBIGOZGTGWXNRHERBHPHGSIWXNPQMJVBCNEIDVVOAGLPONAPWYPXKEFKOCMQTRTIDZBNQKCPLTTNOBXMGLNRRDNNNQKDPLTLNSUTAXMNPTXMGEZKAEIKAGQ"""
 #intxt = "zpgdlrjlajkpylxzpyyglrjgdlrzhzqyjzqrepvmswrzyrigzhzvregkwivssaoltnliuwoldieaqewfiiykhbjowrhdogcqhkwajyaggemisrzqoqhoavlkbjofrylvpsrtgiuavmswlzgmsevwpcdmjsvjqbrnklpcfiowhvkxjbjpmfkrqthtkozrgqihbmqsbivdardymqmpbunivxmtzwqvgefjhucborvwpcdxuwftqmoowjipdsfluqmoeavljgqealrktiwvextvkrrgxani"
 
-c = Cracker(string.ascii_uppercase, p)
-c.attack(intxt)
+c = Cracker(string.ascii_uppercase, p=p, kp=kp_en)
+print("Utilizando kasiski")
+c.attack_kasiski(intxt) # calculamos 
+
+print("\nUtilizando friedman\n")
+c.attack_friedman(intxt)
+#print(c.friedmann_analysis(intxt))
