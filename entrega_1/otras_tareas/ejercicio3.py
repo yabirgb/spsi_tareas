@@ -252,7 +252,7 @@ class Cracker:
         estimation = self._friedman_formula(k0)
         #print(k0, estimation)
         # Buscamos el valor que mas se aproxime a 1
-        nearest_to_one_value, nearest_to_one_length = inf, None
+        averages = []
 
         # En un radio de la primera aproxumacion encontrada
         print(f"Friedman: Obtenemos como punto central {estimation}. Buscamos en [{int(round(estimation))-r}, {int(round(estimation))+r}]")
@@ -261,19 +261,20 @@ class Cracker:
             ic = [self._friedman_formula(self._friedman_IC(s)) for s in s_i]
 
             # calculamos la media de las columnas
-            average = sum(ic)/len(ic)
+            averages.append(sum(ic)/len(ic))
 
-            # Calculamos el valor obtenido de la formula de friedman con la
-            # media 
-            value = self._friedman_formula(average)
             #print(l, "-", value)
-            # Si el valor es mas proximo a 1 lo tomamos
-            if abs(1-value)<nearest_to_one_value:
-                nearest_to_one_value = value
-                nearest_to_one_length = l
+        # Buscamos el valor mas proximo a uno, para ello calculamos la distancia 
+        # y tomamos la posicion
 
-        
-        return nearest_to_one_length
+        # En esta linea tomamos la media que mas se aproxime a 1. Para ello
+        # aplicamos la funcion distancia a 1 al conjunto de medias, las
+        # numeramos, buscamos el minimo en funcion de la distancia y nos
+        # quedamos la posicion. Finalmente esto nos da una posicion entre 0 y el
+        # diametro del radio de busqueda, para encontrar la longitud de clave a
+        # la que se corresponde sumamos el menor elemento del intervalo de
+        # busqueda int(round(estimation))-r
+        return min(enumerate(map(lambda x: abs(1-x), averages)), key=lambda x: x[1])[0] + int(round(estimation))-r
 
     def attack_kasiski(self, intxt):
         # ataque al cifrado de vigenere
@@ -305,7 +306,7 @@ p = [0.1253, 0.014199999999999999, 0.046799999999999994, 0.058600000000000006,
         0.0022, 0.009000000000000001, 0.0052]
 
 kp_en = 0.067
-kp_es = 0.0746
+kp_es = 0.071851
 
 intxt = """UECWKDVLOTTVACKTPVGEZQMDAMRNPDDUXLBUICAMRHOECBHSPQLVIWOFFEAILPNTESMLDRUURIFAEQTTPXADWIAWLACCRPBHSRZIVQWOFROGTTNNXEVIVIBPDTTGAHVIACLAYKGJIEQHGECMESNNOCTHSGGNVWTQHKBPRHMVUOYWLIAFIRIGDBOEBQLIGWARQHNLOISQKEPEIDVXXNETPAXNZGDXWWEYQCTIGONNGJVHSQGEATHSYGSDVVOAQCXLHSPQMDMETRTMDUXTEQQJMFAEEAAIMEZREGIMUECICBXRVQRSMENNWTXTNSRNBPZHMRVRDYNECGSPMEAVTENXKEQKCTTHSPCMQQHSQGTXMFPBGLWQZRBOEIZHQHGRTOBSGTATTZRNFOSMLEDWESIWDRNAPBFOFHEGIXLFVOGUZLNUSRCRAZGZRTTAYFEHKHMCQNTZLENPUCKBAYCICUBNRPCXIWEYCSIMFPRUTPLXSYCBGCCUYCQJMWIEKGTUBRHVATTLEKVACBXQHGPDZEANNTJZTDRNSDTFEVPDXKTMVNAIQMUQNOHKKOAQMTBKOFSUTUXPRTMXBXNPCLRCEAEOIAWGGVVUSGIOEWLIQFOZKSPVMEBLOHLXDVCYSMGOPJEFCXMRUIGDXNCCRPMLCEWTPZMOQQSAWLPHPTDAWEYJOGQSOAVERCTNQQEAVTUGKLJAXMRTGTIEAFWPTZYIPKESMEAFCGJILSBPLDABNFVRJUXNGQSWIUIGWAAMLDRNNPDXGNPTTGLUHUOBMXSPQNDKBDBTEECLECGRDPTYBVRDATQHKQJMKEFROCLXNFKNSCWANNAHXTRGKCJTTRRUEMQZEAEIPAWEYPAJBBLHUEHMVUNFRPVMEDWEKMHRREOGZBDBROGCGANIUYIBNZQVXTGORUUCUTNBOEIZHEFWNBIGOZGTGWXNRHERBHPHGSIWXNPQMJVBCNEIDVVOAGLPONAPWYPXKEFKOCMQTRTIDZBNQKCPLTTNOBXMGLNRRDNNNQKDPLTLNSUTAXMNPTXMGEZKAEIKAGQ"""
 #intxt = "zpgdlrjlajkpylxzpyyglrjgdlrzhzqyjzqrepvmswrzyrigzhzvregkwivssaoltnliuwoldieaqewfiiykhbjowrhdogcqhkwajyaggemisrzqoqhoavlkbjofrylvpsrtgiuavmswlzgmsevwpcdmjsvjqbrnklpcfiowhvkxjbjpmfkrqthtkozrgqihbmqsbivdardymqmpbunivxmtzwqvgefjhucborvwpcdxuwftqmoowjipdsfluqmoeavljgqealrktiwvextvkrrgxani"
