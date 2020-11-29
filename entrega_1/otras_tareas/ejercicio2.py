@@ -1,3 +1,8 @@
+"""
+Laura Sanchez Parra
+Yabir Garcia Benchakhtir
+"""
+
 from string import ascii_lowercase
 
 class Vigenere:

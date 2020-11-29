@@ -6,6 +6,9 @@ Ejercicio 1.
 En este fichero se tienen las distintas modificaciones del algoritmo descrito y
 una versión final que incluye a todas y que calcula a^b con la posibilidad de
 hacer a^b mod n.
+
+Laura Sanchez Parra
+Yabir Garcia Benchakhtir
 """
 
 # En primer lugar presentamos la versión de la función tal y como se describe

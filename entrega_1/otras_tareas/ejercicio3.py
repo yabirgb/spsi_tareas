@@ -1,5 +1,8 @@
 """
 Kasiski method
+
+Laura Sanchez Parra
+Yabir Garcia Benchakhtir
 """
 
 from typing import List, Dict
